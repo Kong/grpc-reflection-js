@@ -1,5 +1,11 @@
-import {ChannelCredentials, Metadata, ServiceError} from '@grpc/grpc-js';
-import {getDescriptorRootFromDescriptorSet} from './descriptor';
+import {
+  ChannelCredentials,
+  Metadata,
+  ServiceError,
+  makeGenericClientConstructor,
+} from '@grpc/grpc-js';
+import {ServiceClient} from '@grpc/grpc-js/build/src/make-client';
+import {getDescriptorRootFromDescriptorSet, set} from './descriptor';
 import * as services from './reflection_grpc_pb';
 import {
   ServerReflectionRequest,
@@ -11,21 +17,36 @@ import {
   IFileDescriptorProto,
   FileDescriptorProto,
 } from 'protobufjs/ext/descriptor';
-import set from 'lodash.set';
 
 export class Client {
   metadata: Metadata;
-  grpcClient: services.IServerReflectionClient;
+  grpcClient: ServiceClient;
   private fileDescriptorCache: Map<string, IFileDescriptorProto> = new Map();
   constructor(
     url: string,
     credentials: ChannelCredentials,
     options?: object,
-    metadata?: Metadata
+    metadata?: Metadata,
+    path = ''
   ) {
     this.fileDescriptorCache = new Map();
     this.metadata = metadata || new Metadata();
-    this.grpcClient = new services.ServerReflectionClient(
+
+    const CustomServerReflectionClient = makeGenericClientConstructor(
+      {
+        serverReflectionInfo: Object.assign(
+          {},
+          services.ServerReflectionService.serverReflectionInfo,
+          {
+            path:
+              path + services.ServerReflectionService.serverReflectionInfo.path,
+          }
+        ),
+      },
+      ''
+    );
+
+    this.grpcClient = new CustomServerReflectionClient(
       url,
       credentials,
       options
