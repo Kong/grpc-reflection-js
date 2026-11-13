@@ -18,18 +18,23 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v3
-      with:
-        persist-credentials: false
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
-    - name: Install packages
-      run: npm ci
-    - name: Run test
-      run: npm test
-    - name: Coverage report
-      run: npm run report
-    - name: Upload report
-      run: bash <(curl -s https://codecov.io/bash)
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Install packages
+        run: npm ci
+      - name: Run test
+        run: npm test
+      - name: Coverage report
+        run: npm run report
+      - name: Upload report
+        run: bash <(curl -s https://codecov.io/bash)
